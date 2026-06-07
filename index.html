@@ -176,10 +176,37 @@ let chart;
 
 async function loadData(periodo = "3h") {
 
-    const res = await fetch(
-    "https://api.allorigins.win/get?url=" +
-    encodeURIComponent(`${API_URL}?periodo=${periodo}`)
-);
+    const url = "https://api.allorigins.win/get?url=" +
+        encodeURIComponent(`${API_URL}?periodo=${periodo}`);
+
+    console.log("🔵 URL FINAL:", url);
+
+    const res = await fetch(url);
+    const raw = await res.json();
+
+    console.log("🟡 RESPUESTA PROXY:", raw);
+
+    if (!raw.contents) {
+        console.error("❌ NO HAY CONTENIDO EN PROXY");
+        return;
+    }
+
+    let data;
+
+    try {
+        data = JSON.parse(raw.contents);
+    } catch (e) {
+        console.error("❌ ERROR JSON PARSE:", raw.contents);
+        return;
+    }
+
+    console.log("🟢 DATA FINAL:", data);
+
+    const r = data.resumen;
+
+    document.getElementById("pool").innerText =
+        r.temperaturaPiscina + " °C";
+}
 
 const raw = await res.json();
 const data = JSON.parse(raw.contents);
