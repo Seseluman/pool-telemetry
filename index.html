@@ -3,44 +3,57 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TELEMETRÍA PISCINA</title>
+<title>TELEMETRÍA PISCINA // NEURAL CONTROL</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
-:root {
+:root{
     --bg:#05070d;
-    --panel:rgba(255,255,255,0.04);
+    --panel:rgba(255,255,255,0.03);
     --stroke:rgba(255,255,255,0.08);
     --cyan:#00e5ff;
     --pink:#ff2bd6;
     --green:#00ffb3;
-    --red:#ff3b3b;
     --text:#e8f0ff;
 }
 
 body{
     margin:0;
     font-family:Inter;
-    background: radial-gradient(circle at top, #0a1020, var(--bg));
+    background:
+        radial-gradient(circle at 20% 10%, rgba(0,229,255,0.08), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(255,43,214,0.06), transparent 45%),
+        radial-gradient(circle at top, #0b1020, var(--bg));
     color:var(--text);
 }
 
-/* HEADER */
+/* HEADER FUTURISTA */
 .header{
     text-align:center;
-    padding:20px;
-    border-bottom:1px solid var(--stroke);
+    padding:22px;
+    position:relative;
+}
+
+.header::after{
+    content:"";
+    position:absolute;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:60%;
+    height:1px;
+    background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity:.6;
 }
 
 .title{
-    font-size:20px;
+    font-size:22px;
     font-weight:800;
-    letter-spacing:3px;
+    letter-spacing:4px;
+    text-shadow:0 0 20px rgba(0,229,255,0.3);
 }
 
 .subtitle{
@@ -48,36 +61,38 @@ body{
     opacity:.6;
 }
 
-/* GRID */
+/* GRID MÁS “3D” */
 .grid{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
     gap:12px;
     padding:18px;
 }
 
 .card{
-    background:var(--panel);
+    background:linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
     border:1px solid var(--stroke);
     border-radius:14px;
     padding:14px;
     position:relative;
     overflow:hidden;
-    transition:.3s;
+    transition:.25s;
+    backdrop-filter: blur(8px);
 }
 
 .card:hover{
-    transform:translateY(-2px);
-    border-color:rgba(0,229,255,0.3);
+    transform:translateY(-3px);
+    border-color:rgba(0,229,255,0.4);
+    box-shadow:0 0 25px rgba(0,229,255,0.08);
 }
 
-/* glow effect */
+/* glow dinámico */
 .card::before{
     content:"";
     position:absolute;
-    inset:0;
-    background:radial-gradient(circle at top left, rgba(0,229,255,0.08), transparent 60%);
-    pointer-events:none;
+    inset:-2px;
+    background:radial-gradient(circle at top left, rgba(0,229,255,0.12), transparent 60%);
+    opacity:.5;
 }
 
 .label{
@@ -86,38 +101,39 @@ body{
     display:flex;
     align-items:center;
     gap:6px;
+    text-transform:uppercase;
+    letter-spacing:1px;
 }
 
 .value{
-    font-size:24px;
+    font-size:26px;
     font-weight:700;
     margin-top:6px;
 }
 
-/* ICONOS (simples, sin librerías) */
-.ico{
-    width:8px;
-    height:8px;
+/* ICONOS MINI FUTURISTAS */
+.dot{
+    width:7px;
+    height:7px;
     border-radius:2px;
     display:inline-block;
 }
 
-.cyan{ background:var(--cyan); }
-.pink{ background:var(--pink); }
-.green{ background:var(--green); }
-.red{ background:var(--red); }
+.cyan{ background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+.pink{ background:var(--pink); box-shadow:0 0 8px var(--pink); }
+.green{ background:var(--green); box-shadow:0 0 8px var(--green); }
 
-/* STATUS LED */
+/* STATUS LED REAL */
 .led{
     width:10px;
     height:10px;
     border-radius:50%;
-    display:inline-block;
     margin-right:6px;
-    box-shadow:0 0 10px currentColor;
+    display:inline-block;
+    box-shadow:0 0 12px currentColor;
 }
 
-/* BUTTONS */
+/* BOTONES MÁS TECH */
 .buttons{
     display:flex;
     justify-content:center;
@@ -126,10 +142,10 @@ body{
 }
 
 button{
-    background:var(--panel);
+    background:rgba(255,255,255,0.03);
     border:1px solid var(--stroke);
     color:var(--text);
-    padding:6px 10px;
+    padding:7px 11px;
     border-radius:10px;
     cursor:pointer;
     font-size:12px;
@@ -138,10 +154,11 @@ button{
 
 button:hover{
     border-color:var(--cyan);
-    box-shadow:0 0 10px rgba(0,229,255,0.2);
+    box-shadow:0 0 12px rgba(0,229,255,0.2);
+    transform:translateY(-1px);
 }
 
-/* CHART */
+/* CHART estilo terminal */
 .chart-container{
     padding:10px 18px 25px;
 }
@@ -159,39 +176,39 @@ canvas{
 <body>
 
 <div class="header">
-    <div class="title">TELEMETRÍA PISCINA</div>
+    <div class="title">TELEMETRÍA PISCINA // NEURAL CONTROL</div>
     <div class="subtitle" id="lastUpdate">--</div>
 </div>
 
 <div class="grid">
 
     <div class="card">
-        <div class="label"><span class="ico cyan"></span>Piscina</div>
+        <div class="label"><span class="dot cyan"></span> PISCINA</div>
         <div class="value" id="pool">--</div>
     </div>
 
     <div class="card">
-        <div class="label"><span class="ico pink"></span>Calentador</div>
+        <div class="label"><span class="dot pink"></span> CALENTADOR</div>
         <div class="value" id="heater">--</div>
     </div>
 
     <div class="card">
-        <div class="label"><span class="ico green"></span>Delta térmico</div>
+        <div class="label"><span class="dot green"></span> Δ TEMPERATURA</div>
         <div class="value" id="delta">--</div>
     </div>
 
     <div class="card">
-        <div class="label"><span id="led" class="led"></span>Depuradora</div>
+        <div class="label"><span id="led" class="led"></span> DEPURADORA</div>
         <div class="value" id="status">--</div>
     </div>
 
     <div class="card">
-        <div class="label"><span class="ico cyan"></span>Tiempo depuración</div>
+        <div class="label"><span class="dot cyan"></span> TIEMPO CICLO</div>
         <div class="value" id="time">--</div>
     </div>
 
     <div class="card">
-        <div class="label"><span class="ico pink"></span>Energía</div>
+        <div class="label"><span class="dot pink"></span> ENERGÍA</div>
         <div class="value" id="energy">--</div>
     </div>
 
@@ -217,74 +234,66 @@ let chart;
 
 async function loadData(periodo="3h") {
 
-    try {
+    const res = await fetch(`${API_URL}?periodo=${periodo}`);
+    const data = await res.json();
+    const r = data.resumen || {};
 
-        const res = await fetch(`${API_URL}?periodo=${periodo}`);
-        const data = await res.json();
-        const r = data.resumen || {};
+    document.getElementById("pool").innerText = (r.temperaturaPiscina ?? "--") + " °C";
+    document.getElementById("heater").innerText = (r.temperaturaCalentador ?? "--") + " °C";
+    document.getElementById("delta").innerText = (Number(r.incrementoTemperatura ?? 0)).toFixed(2) + " °C";
 
-        document.getElementById("pool").innerText = (r.temperaturaPiscina ?? "--") + " °C";
-        document.getElementById("heater").innerText = (r.temperaturaCalentador ?? "--") + " °C";
-        document.getElementById("delta").innerText = (Number(r.incrementoTemperatura ?? 0)).toFixed(2) + " °C";
+    const on = (r.estado?.depuradora || "").includes("ON");
 
-        const on = (r.estado?.depuradora || "").includes("ON");
+    document.getElementById("status").innerText = on ? "ACTIVE" : "OFFLINE";
+    document.getElementById("led").style.color = on ? "#00ffb3" : "#ff3b3b";
 
-        document.getElementById("status").innerText = on ? "ON" : "OFF";
+    document.getElementById("time").innerText = r.estado?.tiempoTranscurrido ?? "--";
+    document.getElementById("energy").innerText = r.balanceEnergetico ?? "--";
 
-        document.getElementById("led").style.color = on ? "#00ffb3" : "#ff3b3b";
+    document.getElementById("lastUpdate").innerText = "SYNC " + (r.fechaHora ?? "--");
 
-        document.getElementById("time").innerText = r.estado?.tiempoTranscurrido ?? "--";
-        document.getElementById("energy").innerText = r.balanceEnergetico ?? "--";
+    const hist = data.historico || [];
 
-        document.getElementById("lastUpdate").innerText =
-            "SYNC: " + (r.fechaHora ?? "--");
+    const labels = hist.map(x => new Date(x.fechaHora).toLocaleTimeString());
+    const p = hist.map(x => x.piscina);
+    const h = hist.map(x => x.calentador);
 
-        const hist = data.historico || [];
+    if(chart) chart.destroy();
 
-        const labels = hist.map(x => new Date(x.fechaHora).toLocaleTimeString());
-        const p = hist.map(x => x.piscina);
-        const h = hist.map(x => x.calentador);
-
-        if(chart) chart.destroy();
-
-        chart = new Chart(document.getElementById("chart"), {
-            type:"line",
-            data:{
-                labels,
-                datasets:[
-                    {
-                        label:"Piscina",
-                        data:p,
-                        borderColor:"#00e5ff",
-                        borderWidth:2,
-                        tension:0.35,
-                        pointRadius:0
-                    },
-                    {
-                        label:"Calentador",
-                        data:h,
-                        borderColor:"#ff2bd6",
-                        borderWidth:2,
-                        tension:0.35,
-                        pointRadius:0
-                    }
-                ]
-            },
-            options:{
-                responsive:true,
-                plugins:{
-                    legend:{ labels:{ color:"#fff" } }
+    chart = new Chart(document.getElementById("chart"), {
+        type:"line",
+        data:{
+            labels,
+            datasets:[
+                {
+                    label:"PISCINA",
+                    data:p,
+                    borderColor:"#00e5ff",
+                    borderWidth:2,
+                    tension:0.35,
+                    pointRadius:0
                 },
-                scales:{
-                    x:{ ticks:{ color:"#aaa" }, grid:{ color:"rgba(255,255,255,0.05)" } },
-                    y:{ ticks:{ color:"#aaa" }, grid:{ color:"rgba(255,255,255,0.05)" } }
+                {
+                    label:"CALENTADOR",
+                    data:h,
+                    borderColor:"#ff2bd6",
+                    borderWidth:2,
+                    tension:0.35,
+                    pointRadius:0
                 }
+            ]
+        },
+        options:{
+            responsive:true,
+            plugins:{
+                legend:{ labels:{ color:"#fff" } }
+            },
+            scales:{
+                x:{ ticks:{ color:"#aaa" }, grid:{ color:"rgba(255,255,255,0.04)" } },
+                y:{ ticks:{ color:"#aaa" }, grid:{ color:"rgba(255,255,255,0.04)" } }
             }
-        });
-
-    } catch(e){
-        console.error(e);
-    }
+        }
+    });
 }
 
 loadData("3h");
