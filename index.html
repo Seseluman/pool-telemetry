@@ -176,7 +176,10 @@ let chart;
 
 async function loadData(periodo = "3h") {
 
-    const res = await fetch(`${API_URL}?periodo=${periodo}`);
+    const res = await fetch(`${API_URL}?periodo=${periodo}`, {
+    method: "GET",
+    mode: "cors"
+});
     const data = await res.json();
 
     const r = data.resumen;
