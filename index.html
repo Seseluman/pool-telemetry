@@ -104,35 +104,12 @@ button:hover {
 
 <div class="grid">
 
-    <div class="card">
-        <div class="label">Piscina</div>
-        <div class="value" id="pool">--</div>
-    </div>
-
-    <div class="card">
-        <div class="label">Calentador</div>
-        <div class="value" id="heater">--</div>
-    </div>
-
-    <div class="card">
-        <div class="label">ΔT</div>
-        <div class="value" id="delta">--</div>
-    </div>
-
-    <div class="card">
-        <div class="label">Depuradora</div>
-        <div class="value" id="status">--</div>
-    </div>
-
-    <div class="card">
-        <div class="label">Tiempo depuración</div>
-        <div class="value" id="time">--</div>
-    </div>
-
-    <div class="card">
-        <div class="label">Balance energético</div>
-        <div class="value" id="energy">--</div>
-    </div>
+    <div class="card"><div class="label">Piscina</div><div class="value" id="pool">--</div></div>
+    <div class="card"><div class="label">Calentador</div><div class="value" id="heater">--</div></div>
+    <div class="card"><div class="label">ΔT</div><div class="value" id="delta">--</div></div>
+    <div class="card"><div class="label">Depuradora</div><div class="value" id="status">--</div></div>
+    <div class="card"><div class="label">Tiempo depuración</div><div class="value" id="time">--</div></div>
+    <div class="card"><div class="label">Balance energético</div><div class="value" id="energy">--</div></div>
 
 </div>
 
@@ -150,96 +127,28 @@ button:hover {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwjBTO4vlrXAvHzg7qZPdIRlmUb0TK4iNfUxHmPuDf9Apzni9HFccRBEJucO-ORuaDz/exec";
+const API_URL =
+"https://script.google.com/macros/s/AKfycbwjBTO4vlrXAvHzg7qZPdIRlmUb0TK4iNfUxHmPuDf9Apzni9HFccRBEJucO-ORuaDz/exec";
 
 let chart;
 
 async function loadData(periodo = "3h") {
 
-    try {
+    const url = "https://api.allorigins.win/get?url=" +
+        encodeURIComponent(`${API_URL}?periodo=${periodo}`);
 
-        const url = "https://api.allorigins.win/get?url=" +
-            encodeURIComponent(`${API_URL}?periodo=${periodo}`);
+    console.log("🔵 URL FINAL:", url);
 
-        const res = await fetch(url);
-        const raw = await res.json();
+    const res = await fetch(url);
 
-        if (!raw.contents) {
-            console.error("No data from proxy");
-            return;
-        }
+    // 👇 CAMBIO IMPORTANTE: NO JSON, queremos ver RAW
+    const rawText = await res.text();
 
-        const data = JSON.parse(raw.contents);
-        const r = data.resumen || {};
+    console.log("🟡 RESPUESTA CRUDA:");
+    console.log(rawText);
 
-        // 🧠 SEGURIDAD TOTAL
-        const piscina = r.temperaturaPiscina ?? 0;
-        const calentador = r.temperaturaCalentador ?? 0;
-        const delta = r.incrementoTemperatura ?? 0;
+    return; // ⛔ IMPORTANTE: cortamos aquí para debug
 
-        document.getElementById("pool").innerText = piscina + " °C";
-        document.getElementById("heater").innerText = calentador + " °C";
-        document.getElementById("delta").innerText = Number(delta).toFixed(2) + " °C";
-
-        document.getElementById("status").innerHTML =
-            (r.estado?.depuradora || "").includes("ON")
-                ? '<span class="status-on">● ON</span>'
-                : '<span class="status-off">● OFF</span>';
-
-        document.getElementById("time").innerText = r.estado?.tiempoTranscurrido ?? "--";
-        document.getElementById("energy").innerText = r.balanceEnergetico ?? "--";
-
-        document.getElementById("lastUpdate").innerText =
-            "Última actualización: " + (r.fechaHora ?? "--");
-
-        // 📊 HISTÓRICO SEGURO
-        const historico = data.historico ?? [];
-
-        const labels = historico.map(x =>
-            new Date(x.fechaHora).toLocaleTimeString()
-        );
-
-        const poolData = historico.map(x => x.piscina);
-        const heaterData = historico.map(x => x.calentador);
-
-        if (chart) chart.destroy();
-
-        chart = new Chart(document.getElementById("chart"), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: "Piscina",
-                        data: poolData,
-                        borderColor: "#00d4ff",
-                        tension: 0.3
-                    },
-                    {
-                        label: "Calentador",
-                        data: heaterData,
-                        borderColor: "#ff00aa",
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        labels: { color: "#fff" }
-                    }
-                },
-                scales: {
-                    x: { ticks: { color: "#aaa" } },
-                    y: { ticks: { color: "#aaa" } }
-                }
-            }
-        });
-
-    } catch (err) {
-        console.error("LOAD ERROR:", err);
-    }
 }
 
 loadData("3h");
