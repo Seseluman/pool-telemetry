@@ -176,11 +176,13 @@ let chart;
 
 async function loadData(periodo = "3h") {
 
-    const res = await fetch(`${API_URL}?periodo=${periodo}`, {
-    method: "GET",
-    mode: "cors"
-});
-    const data = await res.json();
+    const res = await fetch(
+    "https://api.allorigins.win/get?url=" +
+    encodeURIComponent(`${API_URL}?periodo=${periodo}`)
+);
+
+const raw = await res.json();
+const data = JSON.parse(raw.contents);
 
     const r = data.resumen;
 
