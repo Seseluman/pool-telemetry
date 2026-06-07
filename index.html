@@ -134,23 +134,89 @@ let chart;
 
 async function loadData(periodo = "3h") {
 
-    const url = "https://api.allorigins.win/get?url=" +
-        encodeURIComponent(`${API_URL}?periodo=${periodo}`);
+    try {
 
-    console.log("🔵 URL FINAL:", url);
+        // ✅ DIRECTO (SIN PROXY)
+        const res = await fetch(`${API_URL}?periodo=${periodo}`);
+        const data = await res.json();
 
-    const res = await fetch(url);
+        const r = data.resumen || {};
 
-    // 👇 CAMBIO IMPORTANTE: NO JSON, queremos ver RAW
-    const rawText = await res.text();
+        // 🧠 DATOS PRINCIPALES
+        document.getElementById("pool").innerText =
+            (r.temperaturaPiscina ?? "--") + " °C";
 
-    console.log("🟡 RESPUESTA CRUDA:");
-    console.log(rawText);
+        document.getElementById("heater").innerText =
+            (r.temperaturaCalentador ?? "--") + " °C";
 
-    return; // ⛔ IMPORTANTE: cortamos aquí para debug
+        document.getElementById("delta").innerText =
+            (Number(r.incrementoTemperatura ?? 0)).toFixed(2) + " °C";
 
+        document.getElementById("status").innerHTML =
+            (r.estado?.depuradora || "").includes("ON")
+                ? '<span class="status-on">● ON</span>'
+                : '<span class="status-off">● OFF</span>';
+
+        document.getElementById("time").innerText =
+            r.estado?.tiempoTranscurrido ?? "--";
+
+        document.getElementById("energy").innerText =
+            r.balanceEnergetico ?? "--";
+
+        document.getElementById("lastUpdate").innerText =
+            "Última actualización: " + (r.fechaHora ?? "--");
+
+        // 📊 HISTÓRICO
+        const historico = data.historico || [];
+
+        const labels = historico.map(x =>
+            new Date(x.fechaHora).toLocaleTimeString()
+        );
+
+        const poolData = historico.map(x => x.piscina);
+        const heaterData = historico.map(x => x.calentador);
+
+        if (chart) chart.destroy();
+
+        chart = new Chart(document.getElementById("chart"), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: "Piscina",
+                        data: poolData,
+                        borderColor: "#00d4ff",
+                        tension: 0.3
+                    },
+                    {
+                        label: "Calentador",
+                        data: heaterData,
+                        borderColor: "#ff00aa",
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: "#fff" }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: "#aaa" } },
+                    y: { ticks: { color: "#aaa" } }
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error("ERROR CARGANDO DATOS:", err);
+    }
 }
 
+// init
 loadData("3h");
 setInterval(() => loadData("3h"), 60000);
 
