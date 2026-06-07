@@ -76,11 +76,6 @@ body {
     color: #ff4d4d;
 }
 
-/* CHART */
-.chart-container {
-    padding: 20px;
-}
-
 /* BUTTONS */
 .buttons {
     display: flex;
@@ -102,7 +97,11 @@ button:hover {
     background: rgba(0,255,179,0.1);
 }
 
-/* LED */
+/* CHART */
+.chart-container {
+    padding: 20px;
+}
+
 .led {
     width: 10px;
     height: 10px;
@@ -170,7 +169,7 @@ button:hover {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwjBTO4vlrXAvHzg7qZPdIRlmUb0TK4iNfUxHmPuDf9Apzni9HFccRBEJucO-ORuaDz/exec;"
+const API_URL = "https://script.google.com/macros/s/AKfycbwjBTO4vlrXAvHzg7qZPdIRlmUb0TK4iNfUxHmPuDf9Apzni9HFccRBEJucO-ORuaDz/exec";
 
 let chart;
 
@@ -179,37 +178,21 @@ async function loadData(periodo = "3h") {
     const url = "https://api.allorigins.win/get?url=" +
         encodeURIComponent(`${API_URL}?periodo=${periodo}`);
 
-    console.log("🔵 URL FINAL:", url);
-
     const res = await fetch(url);
     const raw = await res.json();
 
-    console.log("🟡 RESPUESTA PROXY:", raw);
-
     if (!raw.contents) {
-        console.error("❌ NO HAY CONTENIDO EN PROXY");
+        console.error("No data from proxy");
         return;
     }
 
     let data;
-
     try {
         data = JSON.parse(raw.contents);
     } catch (e) {
-        console.error("❌ ERROR JSON PARSE:", raw.contents);
+        console.error("JSON parse error", raw.contents);
         return;
     }
-
-    console.log("🟢 DATA FINAL:", data);
-
-    const r = data.resumen;
-
-    document.getElementById("pool").innerText =
-        r.temperaturaPiscina + " °C";
-}
-
-const raw = await res.json();
-const data = JSON.parse(raw.contents);
 
     const r = data.resumen;
 
@@ -229,18 +212,19 @@ const data = JSON.parse(raw.contents);
         "Última actualización: " + r.fechaHora;
 
     // CHART
-    const labels = data.historico.map(x => new Date(x.fechaHora).toLocaleTimeString());
+    const labels = data.historico.map(x =>
+        new Date(x.fechaHora).toLocaleTimeString()
+    );
+
     const pool = data.historico.map(x => x.piscina);
     const heater = data.historico.map(x => x.calentador);
 
     if (chart) chart.destroy();
 
-    const ctx = document.getElementById("chart");
-
-    chart = new Chart(ctx, {
+    chart = new Chart(document.getElementById("chart"), {
         type: 'line',
         data: {
-            labels: labels,
+            labels,
             datasets: [
                 {
                     label: "Piscina",
@@ -271,7 +255,6 @@ const data = JSON.parse(raw.contents);
     });
 }
 
-// auto refresh cada 60s
 loadData("3h");
 setInterval(() => loadData("3h"), 60000);
 
