@@ -13,9 +13,6 @@
 
 <style>
 
-/* =========================
-   BACKGROUND FUTURISTA
-========================= */
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
@@ -112,7 +109,6 @@ button {
     padding: 8px 12px;
     border-radius: 10px;
     cursor: pointer;
-    transition: 0.2s;
 }
 
 button:hover {
@@ -187,42 +183,42 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwjBTO4vlrXAvHzg7qZPdIR
 
 let chart;
 
-/* =========================
-   COLOR SEGÚN TEMPERATURA
-========================= */
-function tempColor(value) {
-    if (value < 26) return "#00d4ff";
-    if (value < 30) return "#00ffb3";
-    if (value < 33) return "#ffcc00";
+/* COLOR TEMPERATURA */
+function tempColor(v) {
+    if (v < 26) return "#00d4ff";
+    if (v < 30) return "#00ffb3";
+    if (v < 33) return "#ffcc00";
     return "#ff4d4d";
 }
 
-/* =========================
-   LOAD DATA
-========================= */
+/* LOAD DATA */
 async function loadData(periodo = "3h") {
 
     const res = await fetch(
-        "https://api.allorigins.win/raw?url=" +
+        "https://api.allorigins.win/get?url=" +
         encodeURIComponent(`${API_URL}?periodo=${periodo}`)
     );
 
-    const data = await res.json();
+    const raw = await res.json();
+    const data = JSON.parse(raw.contents);
+
     const r = data.resumen;
 
-    // TEMPERATURAS
+    /* PISCINA */
     const pool = document.getElementById("pool");
     pool.innerText = r.temperaturaPiscina + " °C";
     pool.style.color = tempColor(r.temperaturaPiscina);
 
+    /* CALENTADOR */
     const heater = document.getElementById("heater");
     heater.innerText = r.temperaturaCalentador + " °C";
     heater.style.color = tempColor(r.temperaturaCalentador);
 
+    /* DELTA */
     document.getElementById("delta").innerText =
         r.incrementoTemperatura.toFixed(2) + " °C";
 
-    // LED DEPURADORA
+    /* ESTADO */
     const status = document.getElementById("status");
     const isOn = r.estado.depuradora.includes("ON");
 
@@ -236,9 +232,7 @@ async function loadData(periodo = "3h") {
     document.getElementById("lastUpdate").innerText =
         "Última actualización: " + r.fechaHora;
 
-    /* =========================
-       GRÁFICA
-    ========================= */
+    /* GRÁFICA */
     const labels = data.historico.map(x =>
         new Date(x.fechaHora).toLocaleTimeString()
     );
@@ -248,12 +242,10 @@ async function loadData(periodo = "3h") {
 
     if (chart) chart.destroy();
 
-    const ctx = document.getElementById("chart");
-
-    chart = new Chart(ctx, {
+    chart = new Chart(document.getElementById("chart"), {
         type: 'line',
         data: {
-            labels: labels,
+            labels,
             datasets: [
                 {
                     label: "Piscina",
