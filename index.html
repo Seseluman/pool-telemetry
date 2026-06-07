@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Pool Telemetry Center</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at top, #0b1220, #05070d);
+    color: #e8f0ff;
+}
+
+/* HEADER */
+.header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.subtitle {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+/* GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    padding: 20px;
+}
+
+/* CARD */
+.card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.label {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.value {
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 5px;
+}
+
+/* STATUS */
+.status-on {
+    color: #00ffb3;
+}
+
+.status-off {
+    color: #ff4d4d;
+}
+
+/* CHART */
+.chart-container {
+    padding: 20px;
+}
+
+/* BUTTONS */
+.buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+button {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: rgba(0,255,179,0.1);
+}
+
+/* LED */
+.led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+    <div class="title">POOL TELEMETRY CENTER</div>
+    <div class="subtitle" id="lastUpdate">--</div>
+</div>
+
+<div class="grid">
+
+    <div class="card">
+        <div class="label">Piscina</div>
+        <div class="value" id="pool">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Calentador</div>
+        <div class="value" id="heater">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">ΔT</div>
+        <div class="value" id="delta">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Depuradora</div>
+        <div class="value" id="status">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Tiempo depuración</div>
+        <div class="value" id="time">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Balance energético</div>
+        <div class="value" id="energy">--</div>
+    </div>
+
+</div>
+
+<div class="buttons">
+    <button onclick="loadData('1h')">1H</button>
+    <button onclick="loadData('3h')">3H</button>
+    <button onclick="loadData('6h')">6H</button>
+    <button onclick="loadData('24h')">24H</button>
+    <button onclick="loadData('7d')">7D</button>
+</div>
+
+<div class="chart-container">
+    <canvas id="chart"></canvas>
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/IDXXXXXX/exec";
+
+let chart;
+
+async function loadData(periodo = "3h") {
+
+    const res = await fetch(`${API_URL}?periodo=${periodo}`);
+    const data = await res.json();
+
+    const r = data.resumen;
+
+    document.getElementById("pool").innerText = r.temperaturaPiscina + " °C";
+    document.getElementById("heater").innerText = r.temperaturaCalentador + " °C";
+    document.getElementById("delta").innerText = r.incrementoTemperatura.toFixed(2) + " °C";
+
+    document.getElementById("status").innerHTML =
+        r.estado.depuradora.includes("ON")
+        ? '<span class="status-on">● ON</span>'
+        : '<span class="status-off">● OFF</span>';
+
+    document.getElementById("time").innerText = r.estado.tiempoTranscurrido;
+    document.getElementById("energy").innerText = r.balanceEnergetico;
+
+    document.getElementById("lastUpdate").innerText =
+        "Última actualización: " + r.fechaHora;
+
+    // CHART
+    const labels = data.historico.map(x => new Date(x.fechaHora).toLocaleTimeString());
+    const pool = data.historico.map(x => x.piscina);
+    const heater = data.historico.map(x => x.calentador);
+
+    if (chart) chart.destroy();
+
+    const ctx = document.getElementById("chart");
+
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Piscina",
+                    data: pool,
+                    borderColor: "#00d4ff",
+                    tension: 0.3
+                },
+                {
+                    label: "Calentador",
+                    data: heater,
+                    borderColor: "#ff00aa",
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: "#fff" }
+                }
+            },
+            scales: {
+                x: { ticks: { color: "#aaa" } },
+                y: { ticks: { color: "#aaa" } }
+            }
+        }
+    });
+}
+
+// auto refresh cada 60s
+loadData("3h");
+setInterval(() => loadData("3h"), 60000);
+
+</script>
+
+</body>
+</html>
