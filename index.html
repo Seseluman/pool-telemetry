@@ -30,30 +30,16 @@ body{
     color:var(--text);
 }
 
-/* HEADER FUTURISTA */
+/* HEADER */
 .header{
     text-align:center;
     padding:22px;
-    position:relative;
-}
-
-.header::after{
-    content:"";
-    position:absolute;
-    bottom:0;
-    left:50%;
-    transform:translateX(-50%);
-    width:60%;
-    height:1px;
-    background:linear-gradient(90deg, transparent, var(--cyan), transparent);
-    opacity:.6;
 }
 
 .title{
     font-size:22px;
     font-weight:800;
     letter-spacing:4px;
-    text-shadow:0 0 20px rgba(0,229,255,0.3);
 }
 
 .subtitle{
@@ -61,7 +47,7 @@ body{
     opacity:.6;
 }
 
-/* GRID MÁS “3D” */
+/* GRID */
 .grid{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
@@ -74,66 +60,44 @@ body{
     border:1px solid var(--stroke);
     border-radius:14px;
     padding:14px;
-    position:relative;
-    overflow:hidden;
-    transition:.25s;
-    backdrop-filter: blur(8px);
 }
 
-.card:hover{
-    transform:translateY(-3px);
-    border-color:rgba(0,229,255,0.4);
-    box-shadow:0 0 25px rgba(0,229,255,0.08);
-}
-
-/* glow dinámico */
-.card::before{
-    content:"";
-    position:absolute;
-    inset:-2px;
-    background:radial-gradient(circle at top left, rgba(0,229,255,0.12), transparent 60%);
-    opacity:.5;
-}
-
+/* LABELS */
 .label{
     font-size:11px;
     opacity:.7;
-    display:flex;
-    align-items:center;
-    gap:6px;
     text-transform:uppercase;
     letter-spacing:1px;
 }
 
+/* VALUES */
 .value{
     font-size:26px;
     font-weight:700;
     margin-top:6px;
 }
 
-/* ICONOS MINI FUTURISTAS */
+/* DOTS */
 .dot{
     width:7px;
     height:7px;
     border-radius:2px;
     display:inline-block;
 }
-
 .cyan{ background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
 .pink{ background:var(--pink); box-shadow:0 0 8px var(--pink); }
 .green{ background:var(--green); box-shadow:0 0 8px var(--green); }
 
-/* STATUS LED REAL */
+/* LED */
 .led{
     width:10px;
     height:10px;
     border-radius:50%;
-    margin-right:6px;
     display:inline-block;
-    box-shadow:0 0 12px currentColor;
+    margin-right:6px;
 }
 
-/* BOTONES MÁS TECH */
+/* BOTONES */
 .buttons{
     display:flex;
     justify-content:center;
@@ -147,18 +111,9 @@ button{
     color:var(--text);
     padding:7px 11px;
     border-radius:10px;
-    cursor:pointer;
-    font-size:12px;
-    transition:.2s;
 }
 
-button:hover{
-    border-color:var(--cyan);
-    box-shadow:0 0 12px rgba(0,229,255,0.2);
-    transform:translateY(-1px);
-}
-
-/* CHART estilo terminal */
+/* CHART */
 .chart-container{
     padding:10px 18px 25px;
 }
@@ -198,17 +153,24 @@ canvas{
     </div>
 
     <div class="card">
-        <div class="label"><span id="led" class="led"></span> DEPURADORA</div>
+        <div class="label"><span class="led"></span> DEPURADORA</div>
         <div class="value" id="status">--</div>
     </div>
 
+    <!-- ⏱ CICLO ACTUAL -->
     <div class="card">
         <div class="label"><span class="dot cyan"></span> TIEMPO CICLO</div>
-        <div class="value" id="time">--</div>
+        <div class="value" id="timeCycle">--</div>
+    </div>
+
+    <!-- ⏱ TOTAL DEPURACIÓN (M3) -->
+    <div class="card">
+        <div class="label"><span class="dot pink"></span> TIEMPO TOTAL DEPURACIÓN</div>
+        <div class="value" id="timeTotal">--</div>
     </div>
 
     <div class="card">
-        <div class="label"><span class="dot pink"></span> ENERGÍA</div>
+        <div class="label"><span class="dot green"></span> ENERGÍA</div>
         <div class="value" id="energy">--</div>
     </div>
 
@@ -238,20 +200,29 @@ async function loadData(periodo="3h") {
     const data = await res.json();
     const r = data.resumen || {};
 
+    // valores principales
     document.getElementById("pool").innerText = (r.temperaturaPiscina ?? "--") + " °C";
     document.getElementById("heater").innerText = (r.temperaturaCalentador ?? "--") + " °C";
     document.getElementById("delta").innerText = (Number(r.incrementoTemperatura ?? 0)).toFixed(2) + " °C";
 
     const on = (r.estado?.depuradora || "").includes("ON");
-
     document.getElementById("status").innerText = on ? "ACTIVE" : "OFFLINE";
-    document.getElementById("led").style.color = on ? "#00ffb3" : "#ff3b3b";
 
-    document.getElementById("time").innerText = r.estado?.tiempoTranscurrido ?? "--";
-    document.getElementById("energy").innerText = r.balanceEnergetico ?? "--";
+    // ⏱ TIEMPO CICLO (I9)
+    document.getElementById("timeCycle").innerText =
+        r.estado?.tiempoTranscurrido ?? "--";
 
-    document.getElementById("lastUpdate").innerText = "SYNC " + (r.fechaHora ?? "--");
+    // ⏱ TIEMPO TOTAL DEPURACIÓN (M3)
+    document.getElementById("timeTotal").innerText =
+        r.tiempoDepuracion ?? "--";
 
+    document.getElementById("energy").innerText =
+        r.balanceEnergetico ?? "--";
+
+    document.getElementById("lastUpdate").innerText =
+        "SYNC " + (r.fechaHora ?? "--");
+
+    // gráfico
     const hist = data.historico || [];
 
     const labels = hist.map(x => new Date(x.fechaHora).toLocaleTimeString());
@@ -282,18 +253,9 @@ async function loadData(periodo="3h") {
                     pointRadius:0
                 }
             ]
-        },
-        options:{
-            responsive:true,
-            plugins:{
-                legend:{ labels:{ color:"#fff" } }
-            },
-            scales:{
-                x:{ ticks:{ color:"#aaa" }, grid:{ color:"rgba(255,255,255,0.04)" } },
-                y:{ ticks:{ color:"#aaa" }, grid:{ color:"rgba(255,255,255,0.04)" } }
-            }
         }
     });
+
 }
 
 loadData("3h");
