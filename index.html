@@ -13,11 +13,19 @@
 
 <style>
 
+/* =========================
+   BACKGROUND FUTURISTA
+========================= */
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
-    background: radial-gradient(circle at top, #0b1220, #05070d);
     color: #e8f0ff;
+    background:
+        radial-gradient(circle at 20% 20%, #0f2a3a 0%, transparent 40%),
+        radial-gradient(circle at 80% 30%, #1b1440 0%, transparent 45%),
+        radial-gradient(circle at 50% 80%, #002b2b 0%, transparent 50%),
+        #05070d;
+    overflow-x: hidden;
 }
 
 /* HEADER */
@@ -28,14 +36,17 @@ body {
 }
 
 .title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    color: #00ffd5;
+    text-shadow: 0 0 10px rgba(0,255,213,0.3);
 }
 
 .subtitle {
     font-size: 12px;
-    opacity: 0.6;
+    opacity: 0.7;
+    letter-spacing: 1px;
 }
 
 /* GRID */
@@ -48,12 +59,22 @@ body {
 
 /* CARD */
 .card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 15px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(0, 255, 200, 0.15);
+    border-radius: 18px;
+    padding: 16px;
+    backdrop-filter: blur(14px);
+    box-shadow:
+        0 0 20px rgba(0,255,200,0.08),
+        inset 0 0 12px rgba(255,255,255,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 0 25px rgba(0,255,200,0.18),
+        inset 0 0 12px rgba(255,255,255,0.05);
 }
 
 .label {
@@ -67,18 +88,13 @@ body {
     margin-top: 5px;
 }
 
-/* STATUS */
-.status-on {
-    color: #00ffb3;
-}
-
-.status-off {
-    color: #ff4d4d;
-}
-
-/* CHART */
-.chart-container {
-    padding: 20px;
+/* LED */
+.led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
 }
 
 /* BUTTONS */
@@ -96,19 +112,16 @@ button {
     padding: 8px 12px;
     border-radius: 10px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 button:hover {
     background: rgba(0,255,179,0.1);
 }
 
-/* LED */
-.led {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
+/* CHART */
+.chart-container {
+    padding: 20px;
 }
 
 </style>
@@ -174,24 +187,48 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwjBTO4vlrXAvHzg7qZPdIR
 
 let chart;
 
+/* =========================
+   COLOR SEGÚN TEMPERATURA
+========================= */
+function tempColor(value) {
+    if (value < 26) return "#00d4ff";
+    if (value < 30) return "#00ffb3";
+    if (value < 33) return "#ffcc00";
+    return "#ff4d4d";
+}
+
+/* =========================
+   LOAD DATA
+========================= */
 async function loadData(periodo = "3h") {
 
-    const res = await fetch(`${API_URL}?periodo=${periodo}`, {
-    method: "GET",
-    mode: "cors"
-});
-    const data = await res.json();
+    const res = await fetch(
+        "https://api.allorigins.win/raw?url=" +
+        encodeURIComponent(`${API_URL}?periodo=${periodo}`)
+    );
 
+    const data = await res.json();
     const r = data.resumen;
 
-    document.getElementById("pool").innerText = r.temperaturaPiscina + " °C";
-    document.getElementById("heater").innerText = r.temperaturaCalentador + " °C";
-    document.getElementById("delta").innerText = r.incrementoTemperatura.toFixed(2) + " °C";
+    // TEMPERATURAS
+    const pool = document.getElementById("pool");
+    pool.innerText = r.temperaturaPiscina + " °C";
+    pool.style.color = tempColor(r.temperaturaPiscina);
 
-    document.getElementById("status").innerHTML =
-        r.estado.depuradora.includes("ON")
-        ? '<span class="status-on">● ON</span>'
-        : '<span class="status-off">● OFF</span>';
+    const heater = document.getElementById("heater");
+    heater.innerText = r.temperaturaCalentador + " °C";
+    heater.style.color = tempColor(r.temperaturaCalentador);
+
+    document.getElementById("delta").innerText =
+        r.incrementoTemperatura.toFixed(2) + " °C";
+
+    // LED DEPURADORA
+    const status = document.getElementById("status");
+    const isOn = r.estado.depuradora.includes("ON");
+
+    status.innerHTML = isOn
+        ? '<span class="led" style="background:#00ffb3; box-shadow:0 0 10px #00ffb3"></span> ACTIVA'
+        : '<span class="led" style="background:#ff4d4d; box-shadow:0 0 10px #ff4d4d"></span> INACTIVA';
 
     document.getElementById("time").innerText = r.estado.tiempoTranscurrido;
     document.getElementById("energy").innerText = r.balanceEnergetico;
@@ -199,10 +236,15 @@ async function loadData(periodo = "3h") {
     document.getElementById("lastUpdate").innerText =
         "Última actualización: " + r.fechaHora;
 
-    // CHART
-    const labels = data.historico.map(x => new Date(x.fechaHora).toLocaleTimeString());
-    const pool = data.historico.map(x => x.piscina);
-    const heater = data.historico.map(x => x.calentador);
+    /* =========================
+       GRÁFICA
+    ========================= */
+    const labels = data.historico.map(x =>
+        new Date(x.fechaHora).toLocaleTimeString()
+    );
+
+    const poolData = data.historico.map(x => x.piscina);
+    const heaterData = data.historico.map(x => x.calentador);
 
     if (chart) chart.destroy();
 
@@ -215,13 +257,13 @@ async function loadData(periodo = "3h") {
             datasets: [
                 {
                     label: "Piscina",
-                    data: pool,
+                    data: poolData,
                     borderColor: "#00d4ff",
                     tension: 0.3
                 },
                 {
                     label: "Calentador",
-                    data: heater,
+                    data: heaterData,
                     borderColor: "#ff00aa",
                     tension: 0.3
                 }
@@ -231,7 +273,7 @@ async function loadData(periodo = "3h") {
             responsive: true,
             plugins: {
                 legend: {
-                    labels: { color: "#fff" }
+                    labels: { color: "#00ffd5" }
                 }
             },
             scales: {
@@ -242,7 +284,7 @@ async function loadData(periodo = "3h") {
     });
 }
 
-// auto refresh cada 60s
+/* AUTO REFRESH */
 loadData("3h");
 setInterval(() => loadData("3h"), 60000);
 
