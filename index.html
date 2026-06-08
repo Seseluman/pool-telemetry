@@ -169,6 +169,34 @@ canvas{
         <div class="value" id="timeTotal">--</div>
     </div>
 
+    <!-- MÍNIMA -->
+    <div class="card">
+        <div class="label">
+            <span class="dot cyan"></span>
+            MÍNIMA REGISTRADA
+        </div>
+    
+        <div style="margin-top:8px;font-size:13px;line-height:1.5">
+            <div id="minDate">--</div>
+            <div>Piscina: <span id="minPool">--</span></div>
+            <div>Calentador: <span id="minHeater">--</span></div>
+        </div>
+    </div>
+
+    <!-- MÁXIMA -->
+    <div class="card">
+        <div class="label">
+            <span class="dot pink"></span>
+            MÁXIMA REGISTRADA
+        </div>
+    
+        <div style="margin-top:8px;font-size:13px;line-height:1.5">
+            <div id="maxDate">--</div>
+            <div>Piscina: <span id="maxPool">--</span></div>
+            <div>Calentador: <span id="maxHeater">--</span></div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="label"><span class="dot green"></span> ENERGÍA</div>
         <div class="value" id="energy">--</div>
@@ -215,6 +243,26 @@ async function loadData(periodo="3h") {
     // ⏱ TIEMPO TOTAL DEPURACIÓN (M3)
     document.getElementById("timeTotal").innerText =
         r.tiempoDepuracion ?? "--";
+
+    // MÍNIMAS
+    document.getElementById("minDate").innerText =
+        r.minima?.fechaHora ?? "--";
+    
+    document.getElementById("minPool").innerText =
+        (r.minima?.piscina ?? "--") + " °C";
+    
+    document.getElementById("minHeater").innerText =
+        (r.minima?.calentador ?? "--") + " °C";
+    
+    // MÁXIMAS
+    document.getElementById("maxDate").innerText =
+        r.maxima?.fechaHora ?? "--";
+    
+    document.getElementById("maxPool").innerText =
+        (r.maxima?.piscina ?? "--") + " °C";
+    
+    document.getElementById("maxHeater").innerText =
+        (r.maxima?.calentador ?? "--") + " °C";
 
     document.getElementById("energy").innerText =
         r.balanceEnergetico ?? "--";
